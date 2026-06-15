@@ -1,0 +1,28 @@
+name: Test fallback input when no tag exists
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Ensure no tags exist
+        run: |
+          git tag -d $(git tag -l) 2>/dev/null || true
+          echo "Tags after cleanup: $(git tag -l)"
+      - id: action
+        uses: .
+        with:
+          fallback: v0.0.0
+      - name: Assert fallback tag output is returned
+        env:
+          ACTUAL: ${{ steps.action.outputs.tag }}
+        run: |
+          echo "actual tag: $ACTUAL"
+          if [ "$ACTUAL" != "v0.0.0" ]; then
+            echo "FAIL: expected fallback tag 'v0.0.0' but got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: fallback tag output is '$ACTUAL'"
