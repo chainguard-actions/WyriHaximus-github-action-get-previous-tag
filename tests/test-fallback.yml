@@ -1,4 +1,4 @@
-name: Test basic tag detection
+name: Test fallback tag when no tags exist
 on:
   workflow_dispatch:
 jobs:
@@ -9,27 +9,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up git and create a known tag
+      - name: Remove all existing tags
         run: |
           git config user.email "test@example.com"
           git config user.name "Test User"
-          # Remove all existing tags so we have a clean state
           git tag -l | xargs -r git tag -d
-          # Create our test tag
-          git tag v1.2.3
 
       - id: action
         uses: .
+        with:
+          fallback: v0.0.0
 
-      - name: Assert tag output
+      - name: Assert fallback tag output
         env:
           ACTUAL_TAG: ${{ steps.action.outputs.tag }}
           ACTUAL_TS: ${{ steps.action.outputs.timestamp }}
         run: |
           echo "actual tag: $ACTUAL_TAG"
           echo "actual timestamp: $ACTUAL_TS"
-          if [ "$ACTUAL_TAG" != "v1.2.3" ]; then
-            echo "FAIL: expected tag 'v1.2.3' but got '$ACTUAL_TAG'"
+          if [ "$ACTUAL_TAG" != "v0.0.0" ]; then
+            echo "FAIL: expected fallback tag 'v0.0.0' but got '$ACTUAL_TAG'"
             exit 1
           fi
           if [ -z "$ACTUAL_TS" ]; then

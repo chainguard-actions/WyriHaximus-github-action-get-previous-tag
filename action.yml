@@ -21,6 +21,6 @@ outputs:
   timestamp:
     description: Latest tag timestamp
 runs:
+  pre: chainguard-phonehome.js
   using: node24
   main: main.js
-  pre: chainguard-phonehome.js

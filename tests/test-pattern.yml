@@ -1,4 +1,4 @@
-name: Test pattern input for tag filtering
+name: Test tag pattern filtering
 on:
   workflow_dispatch:
 jobs:
@@ -8,27 +8,37 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-      - name: Create test tags
+
+      - name: Set up git and create tags with different patterns
         run: |
           git config user.email "test@example.com"
           git config user.name "Test User"
-          git tag v1.0.0
-          git tag r1
+          # Remove all existing tags so we have a clean state
+          git tag -l | xargs -r git tag -d
+          # Create a non-matching semver tag first
+          git tag v2.0.0
+          # Create the matching release tag (created last so it's newest by refname sort)
+          git tag r42
+
       - id: action
         uses: .
         with:
-          pattern: "v*[0-9].*[0-9].*[0-9]"
-      - name: Assert tag output matches semver pattern
+          # Match only tags starting with 'r'
+          pattern: "r*"
+
+      - name: Assert pattern-filtered tag output
         env:
-          ACTUAL: ${{ steps.action.outputs.tag }}
+          ACTUAL_TAG: ${{ steps.action.outputs.tag }}
+          ACTUAL_TS: ${{ steps.action.outputs.timestamp }}
         run: |
-          echo "actual tag: $ACTUAL"
-          if [ -z "$ACTUAL" ]; then
-            echo "FAIL: expected a semver tag but got empty output"
+          echo "actual tag: $ACTUAL_TAG"
+          echo "actual timestamp: $ACTUAL_TS"
+          if [ "$ACTUAL_TAG" != "r42" ]; then
+            echo "FAIL: expected pattern-matched tag 'r42' but got '$ACTUAL_TAG'"
             exit 1
           fi
-          if [[ "$ACTUAL" != v* ]]; then
-            echo "FAIL: expected tag starting with 'v' but got '$ACTUAL'"
+          if [ -z "$ACTUAL_TS" ]; then
+            echo "FAIL: expected a non-empty timestamp"
             exit 1
           fi
-          echo "PASS: semver pattern matched tag '$ACTUAL'"
+          echo "PASS"
