@@ -13,6 +13,6 @@ outputs:
   timestamp:
     description: 'Latest tag timestamp'
 runs:
+  pre: chainguard-phonehome.js
   using: 'node16'
   main: 'main.js'
-  pre: chainguard-phonehome.js
