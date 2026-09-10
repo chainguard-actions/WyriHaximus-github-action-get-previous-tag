@@ -1,0 +1,26 @@
+name: Get Latest Tag
+description: Get the latest tag from git and outputs that for use in other actions
+branding:
+  icon: tag
+  color: gray-dark
+inputs:
+  fallback:
+    description: Fallback tag to use when no previous tag can be found
+    required: false
+  pattern:
+    description: "Pattern to query the tag by this can be semver (v*[0-9].*[0-9].*[0-9]) or a simple monotonically increasing integer (r*) and defaults to *"
+    default: "*"
+    required: false
+  workingDirectory:
+    description: The directory to run this workflow in
+    default: ""
+    required: false
+outputs:
+  tag:
+    description: Latest tag
+  timestamp:
+    description: Latest tag timestamp
+runs:
+  pre: chainguard-phonehome.js
+  using: node24
+  main: main.js

@@ -1,0 +1,41 @@
+name: Test basic usage - get previous tag
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Create a git tag for testing
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          git tag v1.0.0
+
+      - id: action
+        uses: .
+
+      - name: Assert tag output is set
+        env:
+          TAG: ${{ steps.action.outputs.tag }}
+          TIMESTAMP: ${{ steps.action.outputs.timestamp }}
+        run: |
+          echo "tag: $TAG"
+          echo "timestamp: $TIMESTAMP"
+          if [ -z "$TAG" ]; then
+            echo "FAIL: expected tag output to be non-empty"
+            exit 1
+          fi
+          if [ "$TAG" != "v1.0.0" ]; then
+            echo "FAIL: expected tag 'v1.0.0' but got '$TAG'"
+            exit 1
+          fi
+          echo "PASS: tag=$TAG"
+          if [ -z "$TIMESTAMP" ]; then
+            echo "FAIL: expected timestamp output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: timestamp=$TIMESTAMP"

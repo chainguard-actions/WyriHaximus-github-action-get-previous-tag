@@ -1,0 +1,46 @@
+name: Test pattern filtering for tags
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Create multiple git tags for testing
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          # Create a non-semver tag first (older)
+          git tag r1
+          # Create a semver tag (newer)
+          git tag v2.3.4
+
+      - id: action
+        uses: .
+        with:
+          pattern: "v*[0-9].*[0-9].*[0-9]"
+
+      - name: Assert semver tag is returned by pattern
+        env:
+          TAG: ${{ steps.action.outputs.tag }}
+          TIMESTAMP: ${{ steps.action.outputs.timestamp }}
+        run: |
+          echo "tag: $TAG"
+          echo "timestamp: $TIMESTAMP"
+          if [ -z "$TAG" ]; then
+            echo "FAIL: expected tag output to be non-empty"
+            exit 1
+          fi
+          if [ "$TAG" != "v2.3.4" ]; then
+            echo "FAIL: expected semver tag 'v2.3.4' but got '$TAG'"
+            exit 1
+          fi
+          echo "PASS: pattern matched tag=$TAG"
+          if [ -z "$TIMESTAMP" ]; then
+            echo "FAIL: expected timestamp output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: timestamp=$TIMESTAMP"
